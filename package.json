@@ -1,0 +1,32 @@
+{
+    "author": "SableCraft",
+    "dependencies": {
+        "@moddable/pebbleproxy": "^0.1.7"
+    },
+    "keywords": [
+        "pebble-app"
+    ],
+    "name": "imperial-time-2",
+    "pebble": {
+        "capabilities": [
+            "location"
+        ],
+        "displayName": "Imperial Time 2 ",
+        "enableMultiJS": true,
+        "messageKeys": [],
+        "projectType": "moddable",
+        "resources": {
+            "media": []
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "emery",
+            "gabbro"
+        ],
+        "uuid": "5ed71421-ce33-4998-851c-2d533392a07d",
+        "watchapp": {
+            "watchface": true
+        }
+    },
+    "version": "1.0.0"
+}
