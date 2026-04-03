@@ -1,32 +1,28 @@
 import Poco from "commodetto/Poco";
-import parseBMF from "commodetto/parseBMF";
-import parseRLE from "commodetto/parseRLE";
+//import parseBMF from "commodetto/parseBMF";
+//import parseRLE from "commodetto/parseRLE";
 import Battery from "embedded:sensor/Battery";
 import Location from "embedded:sensor/Location";
 import HTTPClient from "embedded:network/http/client";
 
 const render = new Poco(screen);
 
-
-// Load a custom font from BMF resources
-function getFont(name, size) {
-    const font = parseBMF(new Resource(`${name}-${size}.fnt`));
-    font.bitmap = parseRLE(new Resource(`${name}-${size}-alpha.bm4`));
-    return font;
-}
-
-
 // Fonts
-const timeFont = new getFont("lsans", 24);
-const dateFont = new getFont("lsans", 18);
+const timeFont = new render.Font("Gothic-Regular", 28);
 const smallFont = new render.Font("Gothic-Regular", 18);
 const smallFont2 = new render.Font("Gothic-Regular", 14);
-// const dateFont = getFont("Gothic-Regular", 24);
+const dateFont = smallFont;
 
 // Colors
 const black = render.makeColor(0, 0, 0);
 const white = render.makeColor(255, 255, 255);
+const gray = render.makeColor(160, 160, 160);
+const grayer = render.makeColor(80, 80, 80);
+
 const green = render.makeColor(0, 170, 0);
+const greener = render.makeColor(0, 200, 0);
+const darkgreen = render.makeColor(0, 64, 0);
+
 const yellow = render.makeColor(255, 170, 0);
 const red = render.makeColor(255, 0, 0);
 
@@ -331,12 +327,15 @@ function drawScreen(event) {
 
     // Draw time centered
     let width = render.getTextWidth(fuzzy1, timeFont);
-    render.drawText(fuzzy1, timeFont, white,
-        (render.width - width) / 2, timeY);
-
     let width2 = render.getTextWidth(fuzzy2, timeFont);
-    render.drawText(fuzzy2, timeFont, white,
-        (render.width - width2) / 2, timeY2);
+
+	render.drawText(fuzzy1, timeFont, grayer, ((render.width - width) / 2)+1, timeY+1);
+	render.drawText(fuzzy1, timeFont, gray, ((render.width - width) / 2)+0, timeY+0);
+	render.drawText(fuzzy1, timeFont, white, ((render.width - width) / 2)-1, timeY-1);
+
+    render.drawText(fuzzy2, timeFont, grayer, ((render.width - width2) / 2)+1, timeY2+1);
+    render.drawText(fuzzy2, timeFont, gray, ((render.width - width2) / 2)+0, timeY2+0);
+    render.drawText(fuzzy2, timeFont, white, ((render.width - width2) / 2)-1, timeY2-1);
 
 
 
@@ -391,7 +390,10 @@ function drawQuote() {
 
 	quotelines.forEach(line => {
 			let width = render.getTextWidth(line, smallFont2);
-			render.drawText(line, smallFont2, green, (render.width - width)/2, dateY - (lines * smallFont2.height) -2    );// middleY+5+(lines * smallFont2.height));
+	
+			render.drawText(line, smallFont2, darkgreen, ((render.width - width)/2)+1, (dateY - (lines * smallFont2.height) -2)+1    ); // middleY+5+(lines * smallFont2.height));
+			render.drawText(line, smallFont2, greener, ((render.width - width)/2)+0, (dateY - (lines * smallFont2.height) -2)+0    ); // middleY+5+(lines * smallFont2.height));
+	
 			lines--;
 		});
 	
