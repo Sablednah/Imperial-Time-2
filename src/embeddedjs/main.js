@@ -3,11 +3,10 @@ import parseBMF from "commodetto/parseBMF";
 import parseRLE from "commodetto/parseRLE";
 import Battery from "embedded:sensor/Battery";
 import Location from "embedded:sensor/Location";
-//import HTTPClient from "embedded:network/http/client";
+import HTTPClient from "embedded:network/http/client";
 
 const render = new Poco(screen);
 
-var last5min = -1;
 
 // Load a custom font from BMF resources
 function getFont(name, size) {
@@ -48,6 +47,10 @@ const dateY = render.height - smallFont.height - dateFont.height - 7 ; // timeY 
 
 // Store latest time for redraws triggered by other events
 let lastDate = new Date();
+
+var last5min = -1;
+
+//last5min = Math.floor(lastDate.getMinutes() / 10);
 
 // quote data
 let quote = "++THOUGHT FOR THE DAY++|--- REDACTED ---";
@@ -139,26 +142,10 @@ async function fetchWeather(latitude, longitude) {
 
 async function fetchquote() {
 
-	const quotes	= new Array(4);
-	quotes[0]		= "In the grim darkness|of the far future|There is only war!";
-	quotes[1]		= "Though my guards may sleep|and ships may lie at anchor,|our foes know full well|that big guns never tire.";
-	quotes[2]		= "Only the insane have|strength enough to prosper.|Only those who prosper may|truly judge what is sane.";
-	quotes[3]		= "Cadia Stands!";
-
-	
-	
-	let qnum = getRandomInt(quotes.length);
-	
-	quote = "++THOUGHT FOR THE DAY++|"+quotes[qnum];
-	
-
-	
-	
-	return;
 	
   try {
 	
-	let dte = new Date();
+	let dte = lastDate; // new Date();
 
 	
 	//last5min
@@ -171,41 +158,79 @@ async function fetchquote() {
 	
 	if (my5min != last5min) { 
 		last5min = my5min; 
+
+
+		
+		
+//	const quotes	= new Array(4);
+//	quotes[0]		= "In the grim darkness|of the far future|There is only war!";
+//	quotes[1]		= "Though my guards may sleep|and ships may lie at anchor,|our foes know full well|that big guns never tire.";
+//	quotes[2]		= "Only the insane have|strength enough to prosper.|Only those who prosper may|truly judge what is sane.";
+//	quotes[3]		= "Cadia Stands!";
+
+	
+	
+//	let qnum = getRandomInt(quotes.length);
+	
+//	quote = "++THOUGHT FOR THE DAY++|"+quotes[qnum];
+	
+
+	
+	
+//	return;
+		
+		
+		
 //		console.log("new 10 mins - getting new quote.");
 //		if (1==1) {
-			let url2 = new URL("https://sabletopia.co.uk/ids2/quote.php");
+//			let url2 = new URL("https://sabletopia.co.uk/ids2/quote.php");
 //			console.log("got quote url...");
 
-//			url2.search = new URLSearchParams("from=pebble");
-//			console.log("got quote search...");
-						
-			
-//			console.log("Fetching quote...");
+console.log("Fetching quote...");		
 
-			const response2 = await fetch(url2, {
-		    method  : 'GET', 
-			    headers : {
-					"User-Agent"   : "Pebble-Watch"
-				},
-				referrer: "https://sabletopia.co.uk/ids2/quote.php"
-			});
-//			console.log("fetched quote...");
+
+const http = new HTTPClient({
+	host: "sabletopia.co.uk"
+});
+
+http.request({
+	method: "GET",
+	path: "/ids2/quote.php",
+	headers: new Map([
+		["User-Agent", "PostmanRuntime/7.51.99"],
+		["Content-Type", "text/plain"],
+		["Referer","https://sabletopia.co.uk/ids2/quote.php"]
+	]),	
+//	onHeaders(status, headers, statusText) {
+//		console.log(`Status ${status}: ${statusText}`);
+//		headers.forEach((value, key) => {
+//			console.log(`${key}: ${value}`);
+//		});
+//	},
+	onReadable(count) {
+		try {
+			for (let offset = 0, step = 200; offset < count; offset += step) {
+				const buffer = this.read(step);
+				//console.log(String.fromArrayBuffer(buffer));
+				quote = "++ THOUGHT FOR THE DAY ++|"+String.fromArrayBuffer(buffer);	
+				console.log("quoteset: " + quote);
+				drawScreen();
+			}
+		}
+		catch (e) {
+			console.log("read error: " + e);
+		}
+	}
+});	
+			console.log("fetched quote...");
 		
-			const data2 = await response2.json();
 
-//			console.log("data.status: " + data2.status);
-
-			
-			quote  = data2.status;
-
-			console.log("quote: " + quote);
-			drawScreen();
 
 //		}
 	}
 	  
 		} catch (e) {
-			console.log("quote fetch error: " + e);
+			console.log("quote fetch error: " + e + " - line: "+e.lineNumber);
 		}
         drawScreen();	  
 	  
@@ -241,7 +266,7 @@ function drawScreen(event) {
     if (event?.date) lastDate = event.date;
 
 
-	  const time = getFuzzyTime();
+	  const time = getFuzzyTime(now);
 	  const fuzzy1 = time[0];
 	  const fuzzy2 = time[1];
 	  const exact  = time[2];
@@ -324,7 +349,7 @@ function drawScreen(event) {
     render.drawText(dateStr, dateFont, white,
         (render.width - width) / 2, 17);
 
-	let imp = imperialTime();
+	let imp = imperialTime(now);
 
 	console.log(imp);
 
@@ -375,7 +400,7 @@ function drawQuote() {
     }	
 }
 
-	function getFuzzyTime() {
+	function getFuzzyTime(now) {
     try {
 	  		
 				const weekdayNames	= new Array(7);				// create array containing names of days
@@ -440,7 +465,7 @@ function drawQuote() {
       	months[10] = "Nov";
       	months[11] = "Dec";
 
-				var d				= new Date();				// setup new Date object
+				var d				= now; //new Date();				// setup new Date object
 				
 				var hours			= d.getHours();
 				var minutes			= d.getMinutes();
@@ -469,10 +494,10 @@ function drawQuote() {
 //      console.log("Mnutes: "+minutes);
       
       
+	if(exactHours >= 13) {
+	exactHours		= exactHours - 12;
+	}
 				if(hours >= 12) {
-					if(hours > 12) {
-						exactHours		= exactHours - 12;
-					}
 					hours			= hours - 12;
 					meridian		= 'pm';
 				}
@@ -512,7 +537,7 @@ function drawQuote() {
 //      console.log("suffix: "+suffix);
       
       
-				var exactTime	= (exactHours) + ':' + pad(exactMinutes,2) + meridian;
+				var exactTime	= (exactHours) + ':' + pad(exactMinutes,2) + " "+meridian;
 				var fuzzyTime1	= minuteName + " " + prefix;
 	      var fuzzyTime2	= hourName + " " + suffix;
 				
@@ -541,8 +566,8 @@ function drawQuote() {
     }
 
 
-	function imperialTime() {
-		let d				= new Date();				// setup new Date object
+	function imperialTime(now) {
+		let d				= now;// new Date();				// setup new Date object
 	    let year = d.getFullYear();
 
 // 	  console.log("year: " + year);
