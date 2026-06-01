@@ -1,6 +1,7 @@
 import Poco from "commodetto/Poco";
 import Battery from "embedded:sensor/Battery";
 import Location from "embedded:sensor/Location";
+import HTTPClient from "embedded:network/http/client";
 
 const render = new Poco(screen);
 
@@ -92,30 +93,38 @@ function requestLocation() {
     });
 }
 
-async function fetchWeather(lat, lon) {
+function fetchWeather(lat, lon) {
     if (httpBusy) return;
     httpBusy = true;
+    let buf = "";
     try {
-        const url = new URL("http://api.open-meteo.com/v1/forecast");
-        url.search = new URLSearchParams({
-            latitude: lat,
-            longitude: lon,
-            current: "temperature_2m,weather_code"
+        const http = new HTTPClient({ host: "api.open-meteo.com" });
+        http.request({
+            method: "GET",
+            path: "/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current=temperature_2m,weather_code",
+            onReadable(count) {
+                try {
+                    for (let offset = 0; offset < count; offset += 200)
+                        buf += String.fromArrayBuffer(this.read(Math.min(200, count - offset)));
+                    const data = JSON.parse(buf);
+                    weather = {
+                        temp: Math.round(data.current.temperature_2m),
+                        conditions: getWeatherDescription(data.current.weather_code)
+                    };
+                    httpBusy = false;
+                    drawScreen();
+                } catch (e) {
+                    // JSON incomplete — more chunks incoming; clear busy on parse success above
+                }
+            }
         });
-        const response = await fetch(url);
-        const data = await response.json();
-        weather = {
-            temp: Math.round(data.current.temperature_2m),
-            conditions: getWeatherDescription(data.current.weather_code)
-        };
-        drawScreen();
     } catch (e) {
         console.log("Weather fetch error: " + e);
+        httpBusy = false;
     }
-    httpBusy = false;
 }
 
-async function fetchquote() {
+function fetchquote() {
     if (!weatherRequested) {
         weatherRequested = true;
         requestLocation();
@@ -127,14 +136,31 @@ async function fetchquote() {
     if (httpBusy) return;
     httpBusy = true;
     try {
-        const response = await fetch("http://sabletopia.co.uk/ids2/quote.php");
-        const text = await response.text();
-        quote = "++ THOUGHT FOR THE DAY ++|" + text.trim();
-        drawScreen();
+        const http = new HTTPClient({ host: "sabletopia.co.uk" });
+        http.request({
+            method: "GET",
+            path: "/ids2/quote.php",
+            headers: new Map([
+                ["User-Agent", "PostmanRuntime/7.51.99"],
+                ["Content-Type", "text/plain"],
+                ["Referer", "https://sabletopia.co.uk/ids2/quote.php"]
+            ]),
+            onReadable(count) {
+                try {
+                    for (let offset = 0; offset < count; offset += 200)
+                        quote = "++ THOUGHT FOR THE DAY ++|" + String.fromArrayBuffer(this.read(Math.min(200, count - offset)));
+                    httpBusy = false;
+                    drawScreen();
+                } catch (e) {
+                    console.log("read error: " + e);
+                    httpBusy = false;
+                }
+            }
+        });
     } catch (e) {
         console.log("quote fetch error: " + e);
+        httpBusy = false;
     }
-    httpBusy = false;
     drawScreen();
 }
 
