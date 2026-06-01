@@ -85,8 +85,10 @@ function getWeatherDescription(code) {
 }
 
 function requestLocation() {
+    console.log("RL: before new Location");
     activeLocation = new Location({
         onSample() {
+            console.log("RL: onSample fired");
             const s = this.sample();
             this.close();
             activeLocation = null;
@@ -119,6 +121,7 @@ async function fetchWeather(lat, lon) {
 }
 
 async function fetchquote() {
+    console.log("FQ start");
     if (!weatherRequested) {
         weatherRequested = true;
         requestLocation();
@@ -154,6 +157,7 @@ function drawBatteryBar() {
 }
 
 function drawScreen(event) {
+    console.log("DS start");
     const now = event?.date ?? lastDate;
     if (event?.date) lastDate = event.date;
 
