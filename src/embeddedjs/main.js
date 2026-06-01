@@ -39,12 +39,13 @@ const MONTHS       = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oc
 const MINUTE_NAMES = { 5:"five", 10:"ten", 15:"quarter", 20:"twenty", 25:"twentyfive", 30:"half" };
 
 // State
-let lastDate      = new Date();
-let last10min     = -1;
-let quote         = "++THOUGHT FOR THE DAY++|--- REDACTED ---";
-let weather       = null;
+let lastDate       = new Date();
+let last10min      = -1;
+let quote          = "++THOUGHT FOR THE DAY++|--- REDACTED ---";
+let weather        = null;
 let batteryPercent = 100;
-let isConnected   = true;
+let isConnected    = true;
+let activeLocation = null;
 
 // Battery
 const battery = new Battery({
@@ -80,10 +81,11 @@ function getWeatherDescription(code) {
 }
 
 function requestLocation() {
-    new Location({
+    activeLocation = new Location({
         onSample() {
             const s = this.sample();
             this.close();
+            activeLocation = null;
             fetchWeather(s.latitude, s.longitude);
         }
     });
@@ -109,7 +111,7 @@ async function fetchWeather(lat, lon) {
     }
 }
 
-function fetchquote() {
+async function fetchquote() {
     const my10min = Math.floor(lastDate.getMinutes() / 10);
     if (my10min === last10min) return;
     last10min = my10min;
@@ -138,6 +140,7 @@ function fetchquote() {
     } catch (e) {
         console.log("quote fetch error: " + e);
     }
+    drawScreen();
 }
 
 function drawBatteryBar() {
@@ -273,8 +276,8 @@ function getFuzzyTime(now) {
 function imperialTime(now) {
     const year    = now.getFullYear();
     const yearStr = String(year);
-    const yearpart    = yearStr.slice(1, 4);
-    const millennium  = yearStr[0] + "1";
+    const yearpart   = yearStr.slice(1, 4);
+    const millennium = yearStr[0] + "1";
 
     const start = new Date(year, 0, 0);
     const diff  = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
