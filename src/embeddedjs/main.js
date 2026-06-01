@@ -295,4 +295,3 @@ function drawHand(cx, cy, angle, length, color, thick) {
 watch.addEventListener("minutechange", drawScreen);
 watch.addEventListener("minutechange", fetchquote);
 watch.addEventListener("hourchange", requestLocation);
-requestLocation();
