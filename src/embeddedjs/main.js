@@ -1,7 +1,6 @@
 import Poco from "commodetto/Poco";
 import Battery from "embedded:sensor/Battery";
 import Location from "embedded:sensor/Location";
-import HTTPClient from "embedded:network/http/client";
 
 const render = new Poco(screen);
 
@@ -47,6 +46,7 @@ let batteryPercent = 100;
 let isConnected    = true;
 let activeLocation = null;
 let weatherRequested = false;
+let httpBusy = false;
 
 // Battery
 const battery = new Battery({
@@ -93,6 +93,8 @@ function requestLocation() {
 }
 
 async function fetchWeather(lat, lon) {
+    if (httpBusy) return;
+    httpBusy = true;
     try {
         const url = new URL("http://api.open-meteo.com/v1/forecast");
         url.search = new URLSearchParams({
@@ -110,6 +112,7 @@ async function fetchWeather(lat, lon) {
     } catch (e) {
         console.log("Weather fetch error: " + e);
     }
+    httpBusy = false;
 }
 
 async function fetchquote() {
@@ -121,30 +124,17 @@ async function fetchquote() {
     if (my10min === last10min) return;
     last10min = my10min;
 
+    if (httpBusy) return;
+    httpBusy = true;
     try {
-        const http = new HTTPClient({ host: "sabletopia.co.uk" });
-        http.request({
-            method: "GET",
-            path: "/ids2/quote.php",
-            headers: new Map([
-                ["User-Agent", "PostmanRuntime/7.51.99"],
-                ["Content-Type", "text/plain"],
-                ["Referer", "https://sabletopia.co.uk/ids2/quote.php"]
-            ]),
-            onReadable(count) {
-                try {
-                    for (let offset = 0; offset < count; offset += 200) {
-                        quote = "++ THOUGHT FOR THE DAY ++|" + String.fromArrayBuffer(this.read(200));
-                        drawScreen();
-                    }
-                } catch (e) {
-                    console.log("read error: " + e);
-                }
-            }
-        });
+        const response = await fetch("http://sabletopia.co.uk/ids2/quote.php");
+        const text = await response.text();
+        quote = "++ THOUGHT FOR THE DAY ++|" + text.trim();
+        drawScreen();
     } catch (e) {
         console.log("quote fetch error: " + e);
     }
+    httpBusy = false;
     drawScreen();
 }
 
