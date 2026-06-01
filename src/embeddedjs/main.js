@@ -2,7 +2,9 @@ import Poco from "commodetto/Poco";
 import Battery from "embedded:sensor/Battery";
 import Location from "embedded:sensor/Location";
 
+console.log("A");
 const render = new Poco(screen);
+console.log("B");
 
 // Fonts
 const timeFont   = new render.Font("Gothic-Regular", 28);
@@ -48,7 +50,7 @@ let activeLocation = null;
 let weatherRequested = false;
 let httpBusy = false;
 
-// Battery
+console.log("C");
 const battery = new Battery({
     onSample() {
         batteryPercent = this.sample().percent;
@@ -56,6 +58,7 @@ const battery = new Battery({
     }
 });
 batteryPercent = battery.sample().percent;
+console.log("D");
 
 // Connection
 function checkConnection() {
@@ -287,6 +290,7 @@ function drawHand(cx, cy, angle, length, color, thick) {
     render.drawLine(cx, cy, cx + Math.sin(angle) * length, cy - Math.cos(angle) * length, color, thick);
 }
 
+console.log("E");
 watch.addEventListener("minutechange", drawScreen);
 watch.addEventListener("minutechange", fetchquote);
 watch.addEventListener("hourchange", requestLocation);
