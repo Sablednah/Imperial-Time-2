@@ -46,6 +46,7 @@ let weather        = null;
 let batteryPercent = 100;
 let isConnected    = true;
 let activeLocation = null;
+let weatherRequested = false;
 
 // Battery
 const battery = new Battery({
@@ -112,6 +113,10 @@ async function fetchWeather(lat, lon) {
 }
 
 async function fetchquote() {
+    if (!weatherRequested) {
+        weatherRequested = true;
+        requestLocation();
+    }
     const my10min = Math.floor(lastDate.getMinutes() / 10);
     if (my10min === last10min) return;
     last10min = my10min;
